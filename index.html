@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('https://source.unsplash.com/1600x900/?books');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: blue;
+        }
+
+        .btn-custom {
+            background-color: #1a1a1a;
+            color: #f8f9fa;
+        }
+
+        .btn-custom:hover {
+            background-color: #333;
+            color: #f8f9fa;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 0.25rem;
+            border-color: #ced4da;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .card {
+            border: none;
+
+        }
+
+
+
+        .fa-eur {
+            margin-left: 5px;
+        }
+
+        .container-custom {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+
+<body class="text-capitalize">
+    <main id="app">
+        <div class="container mb-3 container-custom">
+            <div class="d-flex">
+                <button class="btn btn-custom fs-3 p-3 ms-auto mb-3" v-on:click="showCheckOut"
+                    :disabled="!cartSize > 0">
+                    {{cartSize}} <i class="fa fa-cart-plus"></i>
+                </button>
+            </div>
+
+            <div v-if="showProduct">
+
+                <div class="mb-3">
+                    <input type="text" class="form-control" v-model="searchTerm" placeholder="Search Product..."
+                        v-on:input="searchLessons">
+                </div>
+
+                <div class="mb-3">
+                    <label for="sortAttribute">Sort By:</label>
+                    <select v-model="sortAttribute" class="form-select">
+                        <option value="title">Title</option>
+                        <option value="subject">Subject</option>
+                        <option value="location">Location</option>
+                        <option value="price">Price</option>
+                        <option value="avaliability">Available</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="sortOrder">Sort Order:</label>
+                    <select v-model="sortOrder" class="form-select">
+                        <option value="TopToBottom">Ascending</option>
+                        <option value="BottomToTop">Descending</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-4 mb-3" v-for="product in lessons">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex">
+                                <div>
+                                    <p class="mb-1">Subject: {{product.subject}}</p>
+                                    <h5 class="mb-0">Title: {{product.title}}</h5>
+                                </div>
+                                <i :class="product.icon" class="fs-1 ms-auto"></i>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-1">Price: {{product.price}} <i class="fa fa-eur"> per hour</i></p>
+                                <p class="mb-1">Location: {{product.location}}</p>
+                                <p class="mb-1">Available: {{product.avaliability}}</p>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between">
+                                <button class="btn btn-outline-success" v-on:click='addToCart(product)'
+                                    :disabled="product.avaliability === 0">
+                                    <i class="fa fa-cart-plus"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" v-on:click='removeProduct(product)'>
+                                    <i class="fa fa-minus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container mt-4 container-custom" v-else>
+                <div class="row">
+                    <div class="col-sm-8 border rounded-3 p-3">
+                        <div v-for="item in cart" class="border-bottom mb-3 pb-3">
+                            <div class="row">
+                                <div class="col-sm-4 text-center">
+                                    <i :class="item.lesson.icon" class="display-1"></i>
+                                </div>
+                                <div class="col-sm-4">
+                                    <p class="mb-1">Title: {{item.lesson.title}}</p>
+                                    <p class="mb-1">Quantity: {{item.amount}}</p>
+                                    <button class="btn btn-outline-danger btn-sm"
+                                        v-on:click='removeProduct(item.lesson)'>
+                                        <i class="fa fa-minus-circle"></i>
+                                    </button>
+                                </div>
+                                <div class="col-sm-4">
+                                    <p class="mb-1">Price: {{item.lesson.price}} <i class="fa fa-eur"> per hour</i></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <p>Total Price: {{cartTotal}} <i class="fa fa-eur"></i></p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 mt-4">
+                        <div class="container">
+                            <div class="row justify-content-center">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Details</h5>
+                                            <form @submit.prevent="submitOrder">
+                                                <div class="mb-3">
+                                                    <label for="username" class="form-label">Name</label>
+                                                    <input type="text" v-model="username" class="form-control"
+                                                        id="username" name="username" placeholder="Name" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="phone" class="form-label">Number</label>
+                                                    <input type="number" v-model="phone" class="form-control" id="phone"
+                                                        name="phone" placeholder="Number" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary"
+                                                    :disabled="!completeOrder">
+                                                    Submit
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </main>
+
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                showProduct: true,
+                lessons: [],
+                cart: [],
+                searchTerm: '',
+                username: '',
+                phone: '',
+                filteredLessons: [],
+                sortAttribute: 'subject',
+                sortOrder: 'TopToBottom',
+                sortedLessons: [],
+                baseURL: "http://localhost:3000/",
+            },
+            created() {
+                this.getLessons();
+            },
+            methods: {
+                async getLessons() {
+                    var res = await fetch(`${this.baseURL}collection/lessons`);
+                    this.lessons = await res.json();
+                },
+
+                async searchLessons() {
+                    var query = `?search=${this.searchTerm}&sort=${this.sortAttribute}&order=${this.sortOrder}`
+
+                    var res = await fetch(`${this.baseURL}search/collection/lessons/${query}`);
+                    this.lessons = await res.json();
+                },
+
+                async submitOrder() {
+                    var order = {
+                        cart: [...this.cart],
+                        username: this.username,
+                        phone: this.phone,
+                    };
+
+                    // Update lessons
+                    this.cart.forEach((item) => {
+                        fetch(`${this.baseURL}collection/lessons/${item.lesson._id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ avaliability: item.lesson.avaliability }),
+                        });
+                    });
+
+                    // Save Order
+                    await fetch(`${this.baseURL}collection/orders`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(order),
+                    });
+                    alert("Order Submitted");
+                    this.cart = [];
+                    this.showProduct = true;
+                },
+
+
+                addToCart(lesson) {
+                    if (lesson.avaliability > 0) {
+                        lesson.avaliability--;
+                        var cartIndex = this.cart.findIndex(i => i.lesson === lesson);
+                        if (cartIndex > -1) {
+                            this.cart[cartIndex].amount++;
+                        } else {
+                            this.cart.push({
+                                lesson: lesson,
+                                amount: 1
+                            });
+                        }
+                    }
+                },
+                removeProduct(lesson) {
+                    const index = this.cart.findIndex(i => i.lesson === lesson);
+                    if (index !== -1) {
+                        this.cart[index].amount--;
+                        lesson.avaliability++;
+                        if (this.cart[index].amount == 0) {
+                            this.cart.splice(index, 1);
+                        }
+                    }
+                },
+                showCheckOut() {
+                    this.showProduct = !this.showProduct;
+                },
+            },
+            computed: {
+
+                cartSize() {
+                    return this.cart.reduce((sum, lesson) => sum + lesson.amount, 0);
+                },
+                canAddToCart(lessons) {
+                    return this.lessons.avaliability > this.checkItemCount(lessons.id);
+                },
+                cartTotal() {
+                    return this.cart.reduce((total, item) => total + (item.amount * item.lesson.price), 0);
+                },
+                completeOrder() {
+                    return /^[a-zA-Z]+$/.test(this.username) && /^\d+$/.test(this.phone);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
