@@ -198,10 +198,13 @@
                 baseURL: "https://cst-3145-coursework-2.vercel.app/",
             },
             created() {
+                // this makes sure that the function is executed first.
                 this.getLessons();
             },
             methods: {
+                // this fuction get lessons from database
                 async getLessons() {
+                    // uses the fetch api to get lessons from the hosted database.
                     var res = await fetch(`${this.baseURL}collection/lessons`);
                     this.lessons = await res.json();
                 },
@@ -211,8 +214,9 @@
 
                     var res = await fetch(`${this.baseURL}search/collection/lessons/${query}`);
                     this.lessons = await res.json();
-                },
+                },  
 
+                // function to submit order
                 async submitOrder() {
                     var order = {
                         cart: [...this.cart],
@@ -238,6 +242,7 @@
                     alert("Order Submitted");
                     this.cart = [];
                     this.showProduct = true;
+                    window.location.reload();
                 },
 
 
